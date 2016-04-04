@@ -15,7 +15,7 @@
 #ifndef __RF24_H__
 #define __RF24_H__
 
-#include <RF24_config.h>
+#include "./RF24_config.h"
 
 /**
  * Power Amplifier level.
@@ -64,6 +64,8 @@ protected:
    *  may want to extend this class.
    */
   /**@{*/
+  
+
 
   /**
    * Set chip select pin
@@ -237,6 +239,9 @@ public:
    */
   RF24(uint8_t _cepin, uint8_t _cspin);
 
+  void setPins(uint8_t _cepin, uint8_t _cspin);
+
+
   /**
    * Begin operation of the chip
    *
@@ -396,6 +401,24 @@ public:
    * @return The number of bytes in the payload
    */
   uint8_t getPayloadSize(void);
+
+  /**
+   * Set address width in bytes
+   * 
+   * Hardware supports 3, 4 or 5 byte addresses 
+   *
+   * @param size The number of bytes in an address
+   */
+  void setAddressSize(uint8_t size);
+
+  /**
+   * Get address width in bytes
+   *
+   * Returns 3, 4 or 5
+   *
+   * @return The number of bytes in an address
+   */
+  uint8_t getAddressSize(void);
 
   /**
    * Get Dynamic Payload Size

@@ -220,11 +220,12 @@ void RF24::print_byte_register(const char* name, uint8_t reg, uint8_t qty)
 void RF24::print_address_register(const char* name, uint8_t reg, uint8_t qty)
 {
   char extra_tab = strlen_P(name) < 8 ? '\t' : 0;
+  int addressSize = getAddressSize();
   printf_P(PSTR(PRIPSTR"\t%c ="),name,extra_tab);
 
   while (qty--)
   {
-    uint8_t buffer[5];
+    uint8_t buffer[addressSize];
     read_register(reg++,buffer,sizeof buffer);
 
     printf_P(PSTR(" 0x"));
@@ -605,13 +606,14 @@ void RF24::openWritingPipe(uint64_t value)
 {
   // Note that AVR 8-bit uC's store this LSB first, and the NRF24L01(+)
   // expects it LSB first too, so we're good.
-
-  write_register(RX_ADDR_P0, reinterpret_cast<uint8_t*>(&value), 5);
-  write_register(TX_ADDR, reinterpret_cast<uint8_t*>(&value), 5);
+  int addressSize = getAddressSize();
+  write_register(RX_ADDR_P0, reinterpret_cast<uint8_t*>(&value), addressSize);
+  write_register(TX_ADDR, reinterpret_cast<uint8_t*>(&value), addressSize);
 
   const uint8_t max_payload_size = 32;
   write_register(RX_PW_P0,min(payload_size,max_payload_size));
 }
+
 
 /****************************************************************************/
 
@@ -630,6 +632,7 @@ static const uint8_t child_pipe_enable[] PROGMEM =
 
 void RF24::openReadingPipe(uint8_t child, uint64_t address)
 {
+    int addressSize = getAddressSize();
   // If this is pipe 0, cache the address.  This is needed because
   // openWritingPipe() will overwrite the pipe 0 address, so
   // startListening() will have to restore it.
@@ -640,7 +643,7 @@ void RF24::openReadingPipe(uint8_t child, uint64_t address)
   {
     // For pipes 2-5, only write the LSB
     if ( child < 2 )
-      write_register(pgm_read_byte(&child_pipe[child]), reinterpret_cast<const uint8_t*>(&address), 5);
+      write_register(pgm_read_byte(&child_pipe[child]), reinterpret_cast<const uint8_t*>(&address), addressSize);
     else
       write_register(pgm_read_byte(&child_pipe[child]), reinterpret_cast<const uint8_t*>(&address), 1);
 
@@ -926,6 +929,20 @@ rf24_datarate_e RF24::getDataRate( void )
   return result ;
 }
 
+/****************************************************************************/
+uint8_t RF24::getAddressSize(void) {
+ return read_register(SETUP_AW)+2;
+}
+
+/****************************************************************************/
+void RF24::setAddressSize(uint8_t size) {
+ write_register(SETUP_AW,size-2);
+}
+/****************************************************************************/
+void RF24::setPins(uint8_t _cepin, uint8_t _cspin) { 
+	ce_pin = _cepin;
+	csn_pin = _cspin;
+}
 /****************************************************************************/
 
 void RF24::setCRCLength(rf24_crclength_e length)
